@@ -243,4 +243,54 @@ public class FrenchFiscalScaleCalculatorTests
         Assert.Equal(100m, report.TotalGrossAmount);
         Assert.Equal(80.00m, report.TotalReimbursableAmount);
     }
+
+    [Theory]
+    [InlineData("BE_FPS", 100, 0, 42.80, "EUR")]
+    [InlineData("CH_TCS", 100, 0, 70.00, "CHF")]
+    [InlineData("US_IRS", 100, 0, 67.00, "USD")]
+    [InlineData("CA_CRA", 100, 0, 70.00, "CAD")]
+    [InlineData("CA_CRA", 200, 4900, 134.00, "CAD")] // 100 km * 0.70 + 100 km * 0.64 = 70 + 64 = 134 CAD
+    [InlineData("UK_HMRC", 100, 0, 45.00, "GBP")]
+    [InlineData("UK_HMRC", 200, 15900, 70.00, "GBP")] // 100 km * 0.45 + 100 km * 0.25 = 45 + 25 = 70 GBP
+    [InlineData("CUSTOM", 100, 0, 50.00, "EUR")]
+    public void InternationalMileageCalculator_CalculatesAllCountriesAndBrackets(
+        string countryScale,
+        decimal distanceKm,
+        decimal previousAnnualKm,
+        decimal expectedAmount,
+        string expectedCurrency)
+    {
+        var (amount, _, currency, description) = InternationalMileageCalculator.CalculateAllowance(
+            countryScale: countryScale,
+            tripDistanceKm: distanceKm,
+            vehicleType: VehicleType.Car,
+            fiscalCv: 5,
+            isElectric: false,
+            previousAnnualKm: previousAnnualKm
+        );
+
+        Assert.Equal(expectedAmount, amount);
+        Assert.Equal(expectedCurrency, currency);
+        Assert.False(string.IsNullOrWhiteSpace(description));
+    }
+
+    [Fact]
+    public void InternationalMileageCalculator_PresetsAndCurrencySymbols_AreValid()
+    {
+        var presets = InternationalMileageCalculator.GetPresets();
+        Assert.Equal(7, presets.Count);
+        Assert.Contains(presets, p => p.Code == "FR_URSSAF" && p.Currency == "EUR");
+        Assert.Contains(presets, p => p.Code == "BE_FPS" && p.Currency == "EUR");
+        Assert.Contains(presets, p => p.Code == "CH_TCS" && p.Currency == "CHF");
+        Assert.Contains(presets, p => p.Code == "CA_CRA" && p.Currency == "CAD");
+        Assert.Contains(presets, p => p.Code == "UK_HMRC" && p.Currency == "GBP");
+        Assert.Contains(presets, p => p.Code == "US_IRS" && p.Currency == "USD");
+        Assert.Contains(presets, p => p.Code == "CUSTOM");
+
+        Assert.Equal("€", InternationalMileageCalculator.GetCurrencySymbol("EUR"));
+        Assert.Equal("CHF", InternationalMileageCalculator.GetCurrencySymbol("CHF"));
+        Assert.Equal("CA$", InternationalMileageCalculator.GetCurrencySymbol("CAD"));
+        Assert.Equal("£", InternationalMileageCalculator.GetCurrencySymbol("GBP"));
+        Assert.Equal("$", InternationalMileageCalculator.GetCurrencySymbol("USD"));
+    }
 }

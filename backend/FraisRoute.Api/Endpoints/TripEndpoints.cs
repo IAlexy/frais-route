@@ -61,19 +61,29 @@ public static class TripEndpoints
 
                 decimal previousAnnualKm = existingAnnualTrips.Sum(t => t.TotalDistanceKm);
 
-                calculatedAmount = FrenchFiscalScaleCalculator.CalculateTripAmount(
+                var (amount, _, _, _) = InternationalMileageCalculator.CalculateAllowance(
+                    countryScale: report.CountryScale,
                     tripDistanceKm: totalKm,
                     vehicleType: vehicle.Type,
                     fiscalCv: vehicle.FiscalHorsepower,
                     isElectric: vehicle.IsElectric,
                     customFixedRate: vehicle.DefaultCustomRatePerKm,
-                    previousAnnualKm: previousAnnualKm
+                    previousAnnualKm: previousAnnualKm,
+                    overrideCurrency: report.Currency
                 );
+                calculatedAmount = amount;
             }
             else
             {
-                // Fallback taux standard moyen si aucun véhicule (5 CV thermique = 0.636)
-                calculatedAmount = Math.Round(totalKm * 0.636m, 2, MidpointRounding.AwayFromZero);
+                var (amount, _, _, _) = InternationalMileageCalculator.CalculateAllowance(
+                    countryScale: report.CountryScale,
+                    tripDistanceKm: totalKm,
+                    vehicleType: VehicleType.Car,
+                    fiscalCv: 5,
+                    isElectric: false,
+                    overrideCurrency: report.Currency
+                );
+                calculatedAmount = amount;
             }
 
             var trip = new Trip
@@ -108,6 +118,8 @@ public static class TripEndpoints
             var trip = await db.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.ExpenseReportId == reportId);
             if (trip is null) return Results.NotFound();
 
+            var report = await db.ExpenseReports.FindAsync(reportId);
+
             Vehicle? vehicle = null;
             if (dto.VehicleId.HasValue)
             {
@@ -123,17 +135,28 @@ public static class TripEndpoints
             }
             else if (vehicle is not null)
             {
-                calculatedAmount = FrenchFiscalScaleCalculator.CalculateTripAmount(
+                var (amount, _, _, _) = InternationalMileageCalculator.CalculateAllowance(
+                    countryScale: report?.CountryScale,
                     tripDistanceKm: totalKm,
                     vehicleType: vehicle.Type,
                     fiscalCv: vehicle.FiscalHorsepower,
                     isElectric: vehicle.IsElectric,
-                    customFixedRate: vehicle.DefaultCustomRatePerKm
+                    customFixedRate: vehicle.DefaultCustomRatePerKm,
+                    overrideCurrency: report?.Currency
                 );
+                calculatedAmount = amount;
             }
             else
             {
-                calculatedAmount = Math.Round(totalKm * 0.636m, 2, MidpointRounding.AwayFromZero);
+                var (amount, _, _, _) = InternationalMileageCalculator.CalculateAllowance(
+                    countryScale: report?.CountryScale,
+                    tripDistanceKm: totalKm,
+                    vehicleType: VehicleType.Car,
+                    fiscalCv: 5,
+                    isElectric: false,
+                    overrideCurrency: report?.Currency
+                );
+                calculatedAmount = amount;
             }
 
             trip.Date = dto.Date;
@@ -149,7 +172,6 @@ public static class TripEndpoints
             trip.CalculatedAmount = calculatedAmount;
             trip.Notes = dto.Notes;
 
-            var report = await db.ExpenseReports.FindAsync(reportId);
             if (report is not null) report.UpdatedAt = DateTime.UtcNow;
 
             await db.SaveChangesAsync();

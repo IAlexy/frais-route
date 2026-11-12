@@ -27,6 +27,113 @@ export enum ReceiptCategory {
   Other = 5
 }
 
+export interface MileagePreset {
+  code: string;
+  name: string;
+  country: string;
+  currency: string;
+  currencySymbol: string;
+  defaultRatePerKm: number;
+  supportsFiscalHorsepower: boolean;
+  supportsElectricBonus: boolean;
+  description: string;
+}
+
+export const DEFAULT_MILEAGE_PRESETS: MileagePreset[] = [
+  {
+    code: 'FR_URSSAF',
+    name: 'France — Barème Fiscal Urssaf / DGFIP',
+    country: 'FR',
+    currency: 'EUR',
+    currencySymbol: '€',
+    defaultRatePerKm: 0.636,
+    supportsFiscalHorsepower: true,
+    supportsElectricBonus: true,
+    description: 'Barème progressif par tranches (5 000 / 20 000 km) selon CV fiscaux et majoration +20% électrique'
+  },
+  {
+    code: 'BE_FPS',
+    name: 'Belgique — SPF Finances',
+    country: 'BE',
+    currency: 'EUR',
+    currencySymbol: '€',
+    defaultRatePerKm: 0.428,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: 'Indemnité kilométrique forfaitaire officielle belge (0,428 €/km)'
+  },
+  {
+    code: 'CH_TCS',
+    name: 'Suisse — Barème TCS / Fédéral',
+    country: 'CH',
+    currency: 'CHF',
+    currencySymbol: 'CHF',
+    defaultRatePerKm: 0.7,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: 'Indemnité kilométrique standard suisse (0,70 CHF/km)'
+  },
+  {
+    code: 'CA_CRA',
+    name: 'Canada — ARC / CRA Automobile Allowance',
+    country: 'CA',
+    currency: 'CAD',
+    currencySymbol: 'CA$',
+    defaultRatePerKm: 0.7,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: 'Barème ARC : 0,70 CA$/km sur les 5 000 premiers km puis 0,64 CA$/km au-delà'
+  },
+  {
+    code: 'UK_HMRC',
+    name: 'Royaume-Uni — HMRC AMAP',
+    country: 'GB',
+    currency: 'GBP',
+    currencySymbol: '£',
+    defaultRatePerKm: 0.45,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: "Barème HMRC : 0,45 £/km jusqu'à 16 000 km annuels puis 0,25 £/km au-delà"
+  },
+  {
+    code: 'US_IRS',
+    name: 'USA — IRS Standard Mileage',
+    country: 'US',
+    currency: 'USD',
+    currencySymbol: '$',
+    defaultRatePerKm: 0.67,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: 'Barème fédéral IRS Standard Mileage (0,67 $/km)'
+  },
+  {
+    code: 'CUSTOM',
+    name: 'International — Forfait Entreprise Personnalisé',
+    country: 'ALL',
+    currency: 'EUR',
+    currencySymbol: '€',
+    defaultRatePerKm: 0.5,
+    supportsFiscalHorsepower: false,
+    supportsElectricBonus: false,
+    description: "Taux kilométrique fixe librement défini par la politique voyage de l'organisation"
+  }
+];
+
+export function formatCurrencySymbol(currency?: string | null): string {
+  switch (currency?.trim().toUpperCase()) {
+    case 'USD':
+      return '$';
+    case 'GBP':
+      return '£';
+    case 'CHF':
+      return 'CHF';
+    case 'CAD':
+      return 'CA$';
+    default:
+      return '€';
+  }
+}
+
 export interface Vehicle {
   id: number;
   name: string;
@@ -90,6 +197,8 @@ export interface ExpenseReportSummary {
   totalGrossAmount: number;
   totalReimbursableAmount: number;
   createdAt: string;
+  countryScale?: string;
+  currency?: string;
 }
 
 export interface ExpenseReportDetail extends ExpenseReportSummary {
@@ -103,6 +212,7 @@ export interface AddressResult {
   label: string;
   city: string;
   postcode: string;
+  country?: string;
   longitude: number;
   latitude: number;
 }
@@ -185,6 +295,8 @@ export const api = {
     periodStart: string;
     periodEnd: string;
     reimbursementRatePercentage?: number;
+    countryScale?: string;
+    currency?: string;
   }): Promise<ExpenseReportDetail> {
     const res = await fetch(`${API_BASE}/reports`, {
       method: 'POST',
@@ -268,7 +380,12 @@ export const api = {
     return handleVoidResponse(res);
   },
 
-  // Simulateur IK
+  // Simulateur & Barèmes Internationaux
+  async getPresets(): Promise<MileagePreset[]> {
+    const res = await fetch(`${API_BASE}/calculator/presets`);
+    return handleJsonResponse<MileagePreset[]>(res);
+  },
+
   async simulate(data: {
     distanceKm: number;
     isRoundTrip: boolean;
@@ -276,6 +393,8 @@ export const api = {
     fiscalHorsepower: number;
     isElectric: boolean;
     customRatePerKm?: number | null;
+    countryScale?: string;
+    currency?: string;
   }): Promise<{
     unitDistanceKm: number;
     isRoundTrip: boolean;
@@ -283,6 +402,8 @@ export const api = {
     ratePerKm: number;
     calculatedAmount: number;
     calculationMethodDescription: string;
+    countryScale?: string;
+    currency?: string;
   }> {
     const res = await fetch(`${API_BASE}/calculator/simulate`, {
       method: 'POST',
@@ -292,10 +413,11 @@ export const api = {
     return handleJsonResponse(res);
   },
 
-  // Adresses & Itinéraire
-  async autocompleteAddress(query: string): Promise<AddressResult[]> {
+  // Adresses & Itinéraire (France + International)
+  async autocompleteAddress(query: string, country?: string): Promise<AddressResult[]> {
     if (!query || query.trim().length < 3) return [];
-    const res = await fetch(`${API_BASE}/addresses/autocomplete?q=${encodeURIComponent(query.trim())}`);
+    const countryParam = country ? `&country=${encodeURIComponent(country)}` : '';
+    const res = await fetch(`${API_BASE}/addresses/autocomplete?q=${encodeURIComponent(query.trim())}${countryParam}`);
     return handleJsonResponse<AddressResult[]>(res);
   },
 

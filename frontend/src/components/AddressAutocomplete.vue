@@ -7,6 +7,7 @@ const props = defineProps<{
   modelValue: string
   placeholder?: string
   label?: string
+  country?: string
 }>()
 
 const emit = defineEmits<{
@@ -39,7 +40,7 @@ function onInput(e: Event) {
   isLoading.value = true
   debounceTimeout = setTimeout(async () => {
     try {
-      results.value = await api.autocompleteAddress(val)
+      results.value = await api.autocompleteAddress(val, props.country)
       isOpen.value = results.value.length > 0
     } catch {
       results.value = []
@@ -80,7 +81,7 @@ function clear() {
         :value="query"
         @input="onInput"
         @focus="isOpen = results.length > 0"
-        :placeholder="placeholder || 'Rechercher une adresse ou une ville...'"
+        :placeholder="placeholder || 'Rechercher une adresse ou une ville (Monde entier)...'"
         class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all shadow-xs"
       />
 
@@ -97,7 +98,7 @@ function clear() {
       </div>
     </div>
 
-    <!-- Dropdown des suggestions de l'API Adresse officielle -->
+    <!-- Dropdown des suggestions (BAN France + Photon OpenStreetMap International) -->
     <div
       v-if="isOpen && results.length > 0"
       class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-slate-100"
@@ -112,7 +113,9 @@ function clear() {
         <MapPin class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
         <div>
           <div class="text-sm font-medium text-slate-800">{{ item.label }}</div>
-          <div class="text-xs text-slate-400">{{ item.postcode }} {{ item.city }}</div>
+          <div class="text-xs text-slate-400">
+            {{ item.postcode }} {{ item.city }}<span v-if="item.country"> · {{ item.country }}</span>
+          </div>
         </div>
       </button>
     </div>

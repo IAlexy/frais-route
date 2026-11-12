@@ -89,7 +89,7 @@ describe('UI Components Tests', () => {
     vi.advanceTimersByTime(350)
     await flushPromises()
 
-    expect(api.autocompleteAddress).toHaveBeenCalledWith('12 Rue de la Paix')
+    expect(api.autocompleteAddress).toHaveBeenCalledWith('12 Rue de la Paix', undefined)
     expect(wrapper.text()).toContain('12 Rue de la Paix 75002 Paris')
     expect(wrapper.text()).toContain('75002 Paris')
 

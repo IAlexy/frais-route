@@ -18,7 +18,7 @@ public static class CalculatorEndpoints
             return Results.Ok(BuildSimulationResponse(req));
         })
         .WithName("SimulateMileage")
-        .WithSummary("Calcule l'indemnité kilométrique selon le barème officiel français ou un taux personnalisé");
+        .WithSummary("Calcule l'indemnité kilométrique selon le barème officiel choisi ou un taux personnalisé");
 
         group.MapGet("/ik", (
             decimal distanceKm,
@@ -27,7 +27,9 @@ public static class CalculatorEndpoints
             int fiscalHorsepower = 5,
             bool isElectric = false,
             decimal? customRatePerKm = null,
-            decimal previousAnnualKm = 0m) =>
+            decimal previousAnnualKm = 0m,
+            string countryScale = "FR_URSSAF",
+            string? currency = null) =>
         {
             if (distanceKm <= 0 || fiscalHorsepower <= 0)
             {
@@ -41,13 +43,22 @@ public static class CalculatorEndpoints
                 FiscalHorsepower: fiscalHorsepower,
                 IsElectric: isElectric,
                 CustomRatePerKm: customRatePerKm,
-                PreviousAnnualKm: previousAnnualKm
+                PreviousAnnualKm: previousAnnualKm,
+                CountryScale: countryScale,
+                Currency: currency
             );
 
             return Results.Ok(BuildSimulationResponse(req));
         })
         .WithName("CalculateIkGet")
         .WithSummary("Simule une indemnité kilométrique via paramètres de requête GET");
+
+        group.MapGet("/presets", () =>
+        {
+            return Results.Ok(InternationalMileageCalculator.GetPresets());
+        })
+        .WithName("GetMileagePresets")
+        .WithSummary("Retourne la liste des barèmes kilométriques internationaux supportés (FR, BE, CH, CA, UK, US, CUSTOM)");
 
         group.MapGet("/rates", () =>
         {
@@ -71,33 +82,28 @@ public static class CalculatorEndpoints
     private static CalculateMileageResponse BuildSimulationResponse(CalculateMileageRequest req)
     {
         decimal totalKm = req.IsRoundTrip ? req.DistanceKm * 2 : req.DistanceKm;
+        var preset = InternationalMileageCalculator.GetPresetOrDefault(req.CountryScale);
 
-        decimal amount = FrenchFiscalScaleCalculator.CalculateTripAmount(
+        var (amount, effectiveRate, currency, description) = InternationalMileageCalculator.CalculateAllowance(
+            countryScale: preset.Code,
             tripDistanceKm: totalKm,
             vehicleType: req.VehicleType,
             fiscalCv: req.FiscalHorsepower,
             isElectric: req.IsElectric,
             customFixedRate: req.CustomRatePerKm,
-            previousAnnualKm: req.PreviousAnnualKm
+            previousAnnualKm: req.PreviousAnnualKm,
+            overrideCurrency: req.Currency
         );
-
-        bool hasCustomRate = req.CustomRatePerKm.HasValue && req.CustomRatePerKm.Value > 0;
-        decimal baseRate = hasCustomRate
-            ? req.CustomRatePerKm!.Value
-            : FrenchFiscalScaleCalculator.GetBaseRatePerKm(req.VehicleType, req.FiscalHorsepower, req.IsElectric);
-
-        string energyLabel = req.IsElectric ? "+20% électrique" : "thermique/hybride";
-        string description = hasCustomRate
-            ? $"Taux entreprise négocié de {req.CustomRatePerKm!.Value:N3} €/km"
-            : $"Barème fiscal officiel Urssaf ({req.FiscalHorsepower} CV, {energyLabel})";
 
         return new CalculateMileageResponse(
             UnitDistanceKm: req.DistanceKm,
             IsRoundTrip: req.IsRoundTrip,
             TotalDistanceKm: totalKm,
-            RatePerKm: baseRate,
+            RatePerKm: effectiveRate,
             CalculatedAmount: amount,
-            CalculationMethodDescription: description
+            CalculationMethodDescription: description,
+            CountryScale: preset.Code,
+            Currency: currency
         );
     }
 }

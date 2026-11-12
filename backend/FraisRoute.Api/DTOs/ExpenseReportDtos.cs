@@ -9,7 +9,9 @@ public record CreateExpenseReportDto(
     string CompanyName,
     DateTime PeriodStart,
     DateTime PeriodEnd,
-    decimal ReimbursementRatePercentage = 100m
+    decimal ReimbursementRatePercentage = 100m,
+    string CountryScale = "FR_URSSAF",
+    string Currency = "EUR"
 );
 
 public record UpdateExpenseReportDto(
@@ -20,7 +22,9 @@ public record UpdateExpenseReportDto(
     DateTime PeriodStart,
     DateTime PeriodEnd,
     ReportStatus Status,
-    decimal ReimbursementRatePercentage
+    decimal ReimbursementRatePercentage,
+    string CountryScale = "FR_URSSAF",
+    string Currency = "EUR"
 );
 
 public record UpdateReportStatusDto(
@@ -43,7 +47,9 @@ public record ExpenseReportSummaryDto(
     decimal TotalReceiptsAmount,
     decimal TotalGrossAmount,
     decimal TotalReimbursableAmount,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string CountryScale = "FR_URSSAF",
+    string Currency = "EUR"
 );
 
 public record ExpenseReportDetailDto(
@@ -64,5 +70,7 @@ public record ExpenseReportDetailDto(
     List<Trip> Trips,
     List<ReceiptExpense> Receipts,
     DateTime CreatedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    string CountryScale = "FR_URSSAF",
+    string Currency = "EUR"
 );

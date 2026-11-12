@@ -4,7 +4,9 @@ import {
   VehicleType,
   ReportStatus,
   RateType,
-  ReceiptCategory
+  ReceiptCategory,
+  formatCurrencySymbol,
+  DEFAULT_MILEAGE_PRESETS
 } from '@/services/api'
 
 describe('api service unit tests', () => {
@@ -250,6 +252,29 @@ describe('api service unit tests', () => {
     })
     const route = await api.calculateRoute(2.35, 48.85, 4.83, 45.76)
     expect(route.distanceKm).toBe(465.2)
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => DEFAULT_MILEAGE_PRESETS
+    })
+    const presets = await api.getPresets()
+    expect(presets).toHaveLength(7)
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        { label: 'Bahnhofstrasse, 8001 Zürich, Switzerland', city: 'Zürich', postcode: '8001', country: 'Switzerland', longitude: 8.54, latitude: 47.37 }
+      ]
+    })
+    const intlAddr = await api.autocompleteAddress('Zürich', 'CH')
+    expect(intlAddr[0].country).toBe('Switzerland')
+    expect(fetchMock).toHaveBeenCalledWith('/api/addresses/autocomplete?q=Z%C3%BCrich&country=CH')
+
+    expect(formatCurrencySymbol('EUR')).toBe('€')
+    expect(formatCurrencySymbol('CHF')).toBe('CHF')
+    expect(formatCurrencySymbol('CAD')).toBe('CA$')
+    expect(formatCurrencySymbol('GBP')).toBe('£')
+    expect(formatCurrencySymbol('USD')).toBe('$')
   })
 
   it('throws descriptive errors when HTTP status is not ok', async () => {

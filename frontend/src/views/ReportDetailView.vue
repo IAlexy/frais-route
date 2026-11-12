@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, type ExpenseReportDetail, ReceiptCategory } from '@/services/api'
+import { api, type ExpenseReportDetail, ReceiptCategory, formatCurrencySymbol } from '@/services/api'
 import { ArrowLeft, Download, Trash2, MapPin, Receipt, Car, Plus, Eye } from 'lucide-vue-next'
 import { Share } from '@capacitor/share'
 import { Capacitor } from '@capacitor/core'
@@ -14,6 +14,8 @@ const report = ref<ExpenseReportDetail | null>(null)
 const isLoading = ref(true)
 const activeTab = ref<'trips' | 'receipts'>('trips')
 const selectedPreviewImage = ref<string | null>(null)
+
+const currencySymbol = computed(() => formatCurrencySymbol(report.value?.currency))
 
 async function loadReport() {
   isLoading.value = true
@@ -113,7 +115,7 @@ function getCategoryLabel(cat: ReceiptCategory) {
           <div class="text-right">
             <span class="text-xs font-semibold text-slate-500">Net à rembourser</span>
             <div class="text-2xl font-black text-blue-600">
-              {{ report.totalReimbursableAmount.toFixed(2) }} €
+              {{ report.totalReimbursableAmount.toFixed(2) }} {{ currencySymbol }}
             </div>
             <div v-if="report.reimbursementRatePercentage < 100" class="text-[10px] text-amber-600 font-bold">
               Prise en charge {{ report.reimbursementRatePercentage }}%
@@ -128,11 +130,11 @@ function getCategoryLabel(cat: ReceiptCategory) {
           </div>
           <div class="bg-slate-50 rounded-xl p-2">
             <span class="text-[10px] text-slate-400 font-semibold block uppercase">Total IK</span>
-            <span class="text-sm font-bold text-slate-800">{{ report.totalMileageAmount.toFixed(2) }} €</span>
+            <span class="text-sm font-bold text-slate-800">{{ report.totalMileageAmount.toFixed(2) }} {{ currencySymbol }}</span>
           </div>
           <div class="bg-slate-50 rounded-xl p-2">
             <span class="text-[10px] text-slate-400 font-semibold block uppercase">Frais Réels</span>
-            <span class="text-sm font-bold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} €</span>
+            <span class="text-sm font-bold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} {{ currencySymbol }}</span>
           </div>
         </div>
       </div>
@@ -183,7 +185,7 @@ function getCategoryLabel(cat: ReceiptCategory) {
               <h3 class="text-sm font-bold text-slate-900">{{ trip.purpose }}</h3>
             </div>
             <div class="text-right">
-              <span class="text-base font-black text-blue-600">{{ trip.calculatedAmount.toFixed(2) }} €</span>
+              <span class="text-base font-black text-blue-600">{{ trip.calculatedAmount.toFixed(2) }} {{ currencySymbol }}</span>
               <div class="text-[11px] text-slate-400">{{ trip.totalDistanceKm.toFixed(0) }} km</div>
             </div>
           </div>
@@ -260,9 +262,9 @@ function getCategoryLabel(cat: ReceiptCategory) {
 
           <div class="flex items-center gap-3">
             <div class="text-right">
-              <span class="text-base font-black text-slate-900">{{ receipt.amountTtc.toFixed(2) }} €</span>
+              <span class="text-base font-black text-slate-900">{{ receipt.amountTtc.toFixed(2) }} {{ currencySymbol }}</span>
               <div v-if="receipt.vatAmount" class="text-[10px] text-slate-400">
-                TVA {{ receipt.vatAmount.toFixed(2) }} €
+                TVA {{ receipt.vatAmount.toFixed(2) }} {{ currencySymbol }}
               </div>
             </div>
             <button

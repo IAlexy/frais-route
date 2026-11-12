@@ -9,6 +9,10 @@ public class ExpenseReportPdfDocument : IDocument
 {
     public ExpenseReport Report { get; }
 
+    private string CurrencySymbol => InternationalMileageCalculator.GetCurrencySymbol(Report.Currency);
+
+    private string ScaleName => InternationalMileageCalculator.GetPresetOrDefault(Report.CountryScale).Name;
+
     public ExpenseReportPdfDocument(ExpenseReport report)
     {
         Report = report;
@@ -45,9 +49,9 @@ public class ExpenseReportPdfDocument : IDocument
 
                     titleCol.Item().Text($"Réf : NDF-{Report.Id:D5} | {Report.Title}")
                         .FontSize(10).SemiBold().FontColor(Colors.Grey.Darken2);
-                    
-                    titleCol.Item().Text($"Période du {Report.PeriodStart:dd/MM/yyyy} au {Report.PeriodEnd:dd/MM/yyyy}")
-                        .FontSize(9).FontColor(Colors.Grey.Darken1);
+
+                    titleCol.Item().Text($"Période du {Report.PeriodStart:dd/MM/yyyy} au {Report.PeriodEnd:dd/MM/yyyy} | Barème : {ScaleName} ({Report.Currency})")
+                        .FontSize(8.5f).FontColor(Colors.Grey.Darken1);
                 });
 
                 row.ConstantItem(140).Column(statusCol =>
@@ -104,6 +108,8 @@ public class ExpenseReportPdfDocument : IDocument
 
     private void ComposeContent(IContainer container)
     {
+        var symbol = CurrencySymbol;
+
         container.Column(col =>
         {
             // Section 1 : Trajets & Kilomètres
@@ -125,7 +131,7 @@ public class ExpenseReportPdfDocument : IDocument
                         columns.RelativeColumn(3);   // Trajet (De -> A)
                         columns.ConstantColumn(45);  // Type
                         columns.ConstantColumn(50);  // Distance
-                        columns.ConstantColumn(65);  // Montant
+                        columns.ConstantColumn(70);  // Montant
                     });
 
                     table.Header(header =>
@@ -141,7 +147,7 @@ public class ExpenseReportPdfDocument : IDocument
                     foreach (var trip in Report.Trips.OrderBy(t => t.Date))
                     {
                         table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(4).Text($"{trip.Date:dd/MM/yyyy}");
-                        
+
                         table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(4).Column(mCol =>
                         {
                             mCol.Item().Text(trip.Purpose).Bold();
@@ -159,7 +165,7 @@ public class ExpenseReportPdfDocument : IDocument
                             .Text($"{trip.TotalDistanceKm:N1} km");
 
                         table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(4).AlignRight()
-                            .Text($"{trip.CalculatedAmount:N2} €").Bold();
+                            .Text($"{trip.CalculatedAmount:N2} {symbol}").Bold();
                     }
                 });
 
@@ -167,7 +173,7 @@ public class ExpenseReportPdfDocument : IDocument
                 col.Item().PaddingTop(4).AlignRight().Text(text =>
                 {
                     text.Span($"Total kilomètres : {Report.TotalDistanceKm:N1} km  |  ").SemiBold();
-                    text.Span($"Sous-total IK : {Report.TotalMileageAmount:N2} €").Bold().FontColor(Colors.Blue.Darken3);
+                    text.Span($"Sous-total IK : {Report.TotalMileageAmount:N2} {symbol}").Bold().FontColor(Colors.Blue.Darken3);
                 });
             }
 
@@ -189,7 +195,7 @@ public class ExpenseReportPdfDocument : IDocument
                         columns.ConstantColumn(85);  // Catégorie
                         columns.RelativeColumn(3);   // Commerçant / Détail
                         columns.ConstantColumn(60);  // Justificatif
-                        columns.ConstantColumn(65);  // Montant TTC
+                        columns.ConstantColumn(70);  // Montant TTC
                     });
 
                     table.Header(header =>
@@ -219,14 +225,14 @@ public class ExpenseReportPdfDocument : IDocument
                         table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(4)
                             .Text(!string.IsNullOrEmpty(receipt.ReceiptImagePath) ? "Oui (Photo)" : "Non");
                         table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(4).AlignRight()
-                            .Text($"{receipt.AmountTtc:N2} €").Bold();
+                            .Text($"{receipt.AmountTtc:N2} {symbol}").Bold();
                     }
                 });
 
                 // Sous-total Reçus
                 col.Item().PaddingTop(4).AlignRight().Text(text =>
                 {
-                    text.Span($"Sous-total Frais réels : {Report.TotalReceiptsAmount:N2} €").Bold().FontColor(Colors.Blue.Darken3);
+                    text.Span($"Sous-total Frais réels : {Report.TotalReceiptsAmount:N2} {symbol}").Bold().FontColor(Colors.Blue.Darken3);
                 });
             }
 
@@ -236,17 +242,17 @@ public class ExpenseReportPdfDocument : IDocument
                 recapCol.Item().Row(r =>
                 {
                     r.RelativeItem().Text("Total Indemnités Kilométriques :");
-                    r.ConstantItem(100).AlignRight().Text($"{Report.TotalMileageAmount:N2} €");
+                    r.ConstantItem(110).AlignRight().Text($"{Report.TotalMileageAmount:N2} {symbol}");
                 });
                 recapCol.Item().Row(r =>
                 {
                     r.RelativeItem().Text("Total Frais Réels (Justificatifs joints) :");
-                    r.ConstantItem(100).AlignRight().Text($"{Report.TotalReceiptsAmount:N2} €");
+                    r.ConstantItem(110).AlignRight().Text($"{Report.TotalReceiptsAmount:N2} {symbol}");
                 });
                 recapCol.Item().Row(r =>
                 {
                     r.RelativeItem().Text("Total Brut :").Bold();
-                    r.ConstantItem(100).AlignRight().Text($"{Report.TotalGrossAmount:N2} €").Bold();
+                    r.ConstantItem(110).AlignRight().Text($"{Report.TotalGrossAmount:N2} {symbol}").Bold();
                 });
 
                 if (Report.ReimbursementRatePercentage < 100m)
@@ -255,7 +261,7 @@ public class ExpenseReportPdfDocument : IDocument
                     {
                         r.RelativeItem().Text($"Taux de prise en charge employeur ({Report.ReimbursementRatePercentage:N0}%) :")
                             .FontColor(Colors.Orange.Darken3);
-                        r.ConstantItem(100).AlignRight().Text($"{Report.ReimbursementRatePercentage:N0} %")
+                        r.ConstantItem(110).AlignRight().Text($"{Report.ReimbursementRatePercentage:N0} %")
                             .FontColor(Colors.Orange.Darken3);
                     });
                 }
@@ -265,7 +271,7 @@ public class ExpenseReportPdfDocument : IDocument
                 recapCol.Item().PaddingTop(4).Row(r =>
                 {
                     r.RelativeItem().Text("NET TOTAL À REMBOURSER :").FontSize(11).Bold().FontColor(Colors.Blue.Darken3);
-                    r.ConstantItem(120).AlignRight().Text($"{Report.TotalReimbursableAmount:N2} €").FontSize(12).Bold().FontColor(Colors.Blue.Darken3);
+                    r.ConstantItem(130).AlignRight().Text($"{Report.TotalReimbursableAmount:N2} {symbol}").FontSize(12).Bold().FontColor(Colors.Blue.Darken3);
                 });
             });
 
@@ -289,13 +295,13 @@ public class ExpenseReportPdfDocument : IDocument
         });
     }
 
-    private static void ComposeFooter(IContainer container)
+    private void ComposeFooter(IContainer container)
     {
         container.Row(row =>
         {
             row.RelativeItem().Text(x =>
             {
-                x.Span("Document généré automatiquement - Conforme Barème Fiscal & Règles Urssaf.")
+                x.Span($"Document généré automatiquement — Barème appliqué : {ScaleName} ({Report.Currency}).")
                     .FontSize(7).FontColor(Colors.Grey.Darken1);
             });
 

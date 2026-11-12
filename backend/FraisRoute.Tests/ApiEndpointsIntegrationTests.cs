@@ -436,6 +436,66 @@ public sealed class ApiEndpointsIntegrationTests : IDisposable
         // GET /api/calculator/rates
         var ratesRes = await _client.GetAsync("/api/calculator/rates");
         Assert.Equal(HttpStatusCode.OK, ratesRes.StatusCode);
+
+        // GET /api/calculator/presets
+        var presets = await _client.GetFromJsonAsync<List<MileagePresetDto>>("/api/calculator/presets");
+        Assert.NotNull(presets);
+        Assert.Equal(7, presets.Count);
+        Assert.Contains(presets, p => p.Code == "CH_TCS" && p.Currency == "CHF");
+
+        // Simulate international scale (Switzerland CH_TCS, 100 km -> 70.00 CHF)
+        var chSimRes = await _client.PostAsJsonAsync(
+            "/api/calculator/simulate",
+            new CalculateMileageRequest(100m, false, VehicleType.Car, 5, false, null, 0m, "CH_TCS", "CHF"));
+        Assert.Equal(HttpStatusCode.OK, chSimRes.StatusCode);
+        var chSimData = await chSimRes.Content.ReadFromJsonAsync<CalculateMileageResponse>();
+        Assert.NotNull(chSimData);
+        Assert.Equal(70.00m, chSimData.CalculatedAmount);
+        Assert.Equal("CHF", chSimData.Currency);
+    }
+
+    [Fact]
+    public async Task InternationalExpenseReport_WithCanadianScale_CalculatesTripsAndPdfInCad()
+    {
+        var reportRes = await _client.PostAsJsonAsync("/api/reports", new CreateExpenseReportDto(
+            Title: "Frais Août 2026 - Montréal",
+            EmployeeName: "Jean Tremblay",
+            EmployeeEmail: "jean@montreal.ca",
+            CompanyName: "Québec Tech Inc.",
+            PeriodStart: new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc),
+            PeriodEnd: new DateTime(2026, 8, 31, 0, 0, 0, DateTimeKind.Utc),
+            ReimbursementRatePercentage: 100m,
+            CountryScale: "CA_CRA",
+            Currency: "CAD"
+        ));
+        Assert.Equal(HttpStatusCode.Created, reportRes.StatusCode);
+        var report = await reportRes.Content.ReadFromJsonAsync<ExpenseReport>();
+        Assert.NotNull(report);
+        Assert.Equal("CA_CRA", report.CountryScale);
+        Assert.Equal("CAD", report.Currency);
+
+        var tripRes = await _client.PostAsJsonAsync($"/api/reports/{report.Id}/trips", new CreateTripDto(
+            Date: new DateTime(2026, 8, 10, 0, 0, 0, DateTimeKind.Utc),
+            Purpose: "Visite client Québec",
+            ClientOrLocation: "Québec",
+            DepartureAddress: "Montréal, QC",
+            ArrivalAddress: "Québec, QC",
+            DistanceKm: 250m,
+            IsRoundTrip: true, // 500 km * 0.70 CAD = 350.00 CAD
+            VehicleId: 1,
+            CalculationMethod: RateType.FiscalScale,
+            CustomRatePerKm: null,
+            Notes: null
+        ));
+        Assert.Equal(HttpStatusCode.Created, tripRes.StatusCode);
+        var trip = await tripRes.Content.ReadFromJsonAsync<Trip>();
+        Assert.NotNull(trip);
+        Assert.Equal(350.00m, trip.CalculatedAmount);
+
+        var pdfRes = await _client.GetAsync($"/api/reports/{report.Id}/pdf");
+        Assert.Equal(HttpStatusCode.OK, pdfRes.StatusCode);
+        byte[] pdfBytes = await pdfRes.Content.ReadAsByteArrayAsync();
+        Assert.Equal("%PDF-", Encoding.ASCII.GetString(pdfBytes, 0, 5));
     }
 
     [Fact]

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { api, type ExpenseReportSummary, ReportStatus } from '@/services/api'
-import { Plus, Download, FileText, Calendar, ChevronRight, CheckCircle2, Clock, AlertCircle } from 'lucide-vue-next'
+import {
+  api,
+  type ExpenseReportSummary,
+  ReportStatus,
+  DEFAULT_MILEAGE_PRESETS,
+  formatCurrencySymbol
+} from '@/services/api'
+import { Plus, Download, FileText, Calendar, ChevronRight, CheckCircle2, Clock, AlertCircle, Globe } from 'lucide-vue-next'
 import { Share } from '@capacitor/share'
 import { Capacitor } from '@capacitor/core'
 
@@ -16,6 +22,11 @@ const newCompanyName = ref('Mon Entreprise')
 const newPeriodStart = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10))
 const newPeriodEnd = ref(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10))
 const newReimbursementRate = ref(100)
+const newCountryScale = ref('FR_URSSAF')
+
+const selectedPreset = computed(() => {
+  return DEFAULT_MILEAGE_PRESETS.find((p) => p.code === newCountryScale.value) || DEFAULT_MILEAGE_PRESETS[0]
+})
 
 async function loadReports() {
   isLoading.value = true
@@ -46,11 +57,13 @@ async function createReport() {
       companyName: newCompanyName.value,
       periodStart: new Date(newPeriodStart.value).toISOString(),
       periodEnd: new Date(newPeriodEnd.value).toISOString(),
-      reimbursementRatePercentage: newReimbursementRate.value
+      reimbursementRatePercentage: newReimbursementRate.value,
+      countryScale: newCountryScale.value,
+      currency: selectedPreset.value.currency
     })
     showCreateModal.value = false
     await loadReports()
-  } catch (err) {
+  } catch {
     alert('Erreur lors de la création de la note de frais')
   }
 }
@@ -97,7 +110,7 @@ function getStatusBadge(status: ReportStatus) {
     <header class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Frais de route</h1>
-        <p class="text-xs text-slate-500 mt-0.5">Indemnités kilométriques & Justificatifs</p>
+        <p class="text-xs text-slate-500 mt-0.5">Indemnités kilométriques & Justificatifs multi-pays</p>
       </div>
       <button
         @click="showCreateModal = true"
@@ -123,7 +136,7 @@ function getStatusBadge(status: ReportStatus) {
         <div class="text-2xl font-black text-slate-800 mt-1">
           {{ totalKmAll.toFixed(0) }} <span class="text-sm font-semibold text-slate-500">km</span>
         </div>
-        <span class="text-[11px] text-slate-400">Barème fiscal Urssaf</span>
+        <span class="text-[11px] text-slate-400">Multi-barèmes fiscaux</span>
       </div>
     </div>
 
@@ -167,6 +180,9 @@ function getStatusBadge(status: ReportStatus) {
                 {{ getStatusBadge(report.status).text }}
               </span>
               <span class="text-[11px] text-slate-400 font-mono">NDF-{{ String(report.id).padStart(5, '0') }}</span>
+              <span v-if="report.countryScale" class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                {{ report.countryScale }}
+              </span>
             </div>
             <h3 class="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
               {{ report.title }}
@@ -179,7 +195,7 @@ function getStatusBadge(status: ReportStatus) {
 
           <div class="text-right shrink-0">
             <div class="text-lg font-black text-slate-900">
-              {{ report.totalReimbursableAmount.toFixed(2) }} €
+              {{ report.totalReimbursableAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}
             </div>
             <div class="text-[11px] text-slate-400">
               {{ report.totalDistanceKm.toFixed(0) }} km · {{ report.tripsCount }} trajet(s)
@@ -190,8 +206,8 @@ function getStatusBadge(status: ReportStatus) {
         <!-- Boutons d'action rapides -->
         <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
           <div class="text-[11px] text-slate-500 font-medium">
-            IK : <span class="font-semibold text-slate-800">{{ report.totalMileageAmount.toFixed(2) }} €</span>
-            <span v-if="report.totalReceiptsAmount > 0"> · Reçus : <span class="font-semibold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} €</span></span>
+            IK : <span class="font-semibold text-slate-800">{{ report.totalMileageAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}</span>
+            <span v-if="report.totalReceiptsAmount > 0"> · Reçus : <span class="font-semibold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}</span></span>
           </div>
 
           <div class="flex items-center gap-2">
@@ -216,7 +232,7 @@ function getStatusBadge(status: ReportStatus) {
     >
       <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
         <h3 class="text-lg font-bold text-slate-900 mb-1">Nouvelle note de frais</h3>
-        <p class="text-xs text-slate-500 mb-4">Définissez la période et l'organisme bénéficiaire.</p>
+        <p class="text-xs text-slate-500 mb-4">Définissez la période, le pays/barème fiscal et l'organisme.</p>
 
         <form @submit.prevent="createReport" class="space-y-3.5">
           <div>
@@ -227,6 +243,21 @@ function getStatusBadge(status: ReportStatus) {
               required
               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             />
+          </div>
+
+          <div>
+            <label class="flex items-center gap-1 text-xs font-semibold text-slate-600 mb-1">
+              <Globe class="w-3.5 h-3.5 text-blue-600" />
+              Barème fiscal & Devise
+            </label>
+            <select
+              v-model="newCountryScale"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-slate-900 outline-none"
+            >
+              <option v-for="p in DEFAULT_MILEAGE_PRESETS" :key="p.code" :value="p.code">
+                {{ p.name }} ({{ p.currency }})
+              </option>
+            </select>
           </div>
 
           <div class="grid grid-cols-2 gap-3">

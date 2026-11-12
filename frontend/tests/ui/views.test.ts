@@ -74,6 +74,27 @@ describe('Main Views UI Tests', () => {
       expect.objectContaining({ fiscalHorsepower: 6 })
     )
     expect(wrapper.text()).toContain('113.05 €')
+
+    // Switch to Switzerland scale (CH_TCS / CHF)
+    vi.mocked(api.simulate).mockResolvedValueOnce({
+      unitDistanceKm: 85,
+      isRoundTrip: true,
+      totalDistanceKm: 170,
+      ratePerKm: 0.7,
+      calculatedAmount: 119.0,
+      calculationMethodDescription: 'Barème Suisse TCS (0,70 CHF/km)',
+      countryScale: 'CH_TCS',
+      currency: 'CHF'
+    })
+
+    const scaleSelect = wrapper.find('select')
+    await scaleSelect.setValue('CH_TCS')
+    await flushPromises()
+
+    expect(api.simulate).toHaveBeenCalledWith(
+      expect.objectContaining({ countryScale: 'CH_TCS', currency: 'CHF' })
+    )
+    expect(wrapper.text()).toContain('119.00 CHF')
   })
 
   it('VehiclesView lists vehicles and opens modal to create a new vehicle', async () => {

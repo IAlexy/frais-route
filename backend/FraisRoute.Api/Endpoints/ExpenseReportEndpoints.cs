@@ -36,7 +36,9 @@ public static class ExpenseReportEndpoints
                 e.TotalReceiptsAmount,
                 e.TotalGrossAmount,
                 e.TotalReimbursableAmount,
-                e.CreatedAt
+                e.CreatedAt,
+                e.CountryScale,
+                e.Currency
             )).ToList();
 
             return Results.Ok(reports);
@@ -73,7 +75,9 @@ public static class ExpenseReportEndpoints
                 report.Trips.OrderBy(t => t.Date).ToList(),
                 report.Receipts.OrderBy(r => r.Date).ToList(),
                 report.CreatedAt,
-                report.UpdatedAt
+                report.UpdatedAt,
+                report.CountryScale,
+                report.Currency
             );
 
             return Results.Ok(detail);
@@ -101,6 +105,11 @@ public static class ExpenseReportEndpoints
                 return Results.Conflict("Une note de frais existe déjà pour ce salarié sur cette période mensuelle.");
             }
 
+            var preset = InternationalMileageCalculator.GetPresetOrDefault(dto.CountryScale);
+            var currency = !string.IsNullOrWhiteSpace(dto.Currency)
+                ? dto.Currency.Trim().ToUpperInvariant()
+                : preset.Currency;
+
             var report = new ExpenseReport
             {
                 Title = dto.Title.Trim(),
@@ -110,6 +119,8 @@ public static class ExpenseReportEndpoints
                 PeriodStart = dto.PeriodStart,
                 PeriodEnd = dto.PeriodEnd,
                 ReimbursementRatePercentage = dto.ReimbursementRatePercentage,
+                CountryScale = preset.Code,
+                Currency = currency,
                 Status = ReportStatus.Draft,
                 CreatedAt = DateTime.UtcNow
             };
@@ -127,6 +138,8 @@ public static class ExpenseReportEndpoints
             var report = await db.ExpenseReports.FindAsync(id);
             if (report is null) return Results.NotFound();
 
+            var preset = InternationalMileageCalculator.GetPresetOrDefault(dto.CountryScale);
+
             report.Title = dto.Title;
             report.EmployeeName = dto.EmployeeName;
             report.EmployeeEmail = dto.EmployeeEmail;
@@ -135,6 +148,10 @@ public static class ExpenseReportEndpoints
             report.PeriodEnd = dto.PeriodEnd;
             report.Status = dto.Status;
             report.ReimbursementRatePercentage = dto.ReimbursementRatePercentage;
+            report.CountryScale = preset.Code;
+            report.Currency = !string.IsNullOrWhiteSpace(dto.Currency)
+                ? dto.Currency.Trim().ToUpperInvariant()
+                : preset.Currency;
             report.UpdatedAt = DateTime.UtcNow;
 
             await db.SaveChangesAsync();

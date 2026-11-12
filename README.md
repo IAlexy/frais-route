@@ -1,4 +1,4 @@
-# 🚗 FraisRoute — Gestion des Indemnités Kilométriques & Notes de Frais (Web / Mobile)
+# 🌍 FraisRoute — Plateforme Internationale d'Indemnités Kilométriques & Notes de Frais (Web / Mobile)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](./LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
@@ -7,26 +7,30 @@
 [![Capacitor](https://img.shields.io/badge/Capacitor-iOS%20%2F%20Android-119EFF?logo=capacitor)](https://capacitorjs.com/)
 [![Sonar Quality](https://img.shields.io/badge/Sonar-0%20Warning-00ff88)](./sonar-project.properties)
 
-**FraisRoute** est une plateforme complète et open-source de gestion des **frais de déplacement professionnels** et de calcul des **indemnités kilométriques (IK)** conforme aux barèmes officiels français (**Urssaf / DGFIP**). Elle repose sur une codebase unifiée **Web & Mobile (Vue 3 + Capacitor)** propulsée par une API **.NET 8 Minimal APIs**, une persistance **SQLite** embarquée et un moteur d'export **PDF officiel (QuestPDF)**.
+**FraisRoute** est une plateforme générique, internationale et open-source de gestion des **frais de déplacement professionnels** et de calcul des **indemnités kilométriques (IK)**. Conçue pour s'adapter à n'importe quelle entreprise ou travailleur indépendant dans le monde, elle intègre nativement les barèmes officiels de **6 juridictions fiscales** (**France Urssaf**, **Belgique SPF**, **Suisse TCS**, **Canada ARC/CRA**, **Royaume-Uni HMRC**, **USA IRS**) ainsi qu'un mode **Forfait Entreprise Personnalisé** multi-devises (`EUR`, `CHF`, `CAD`, `GBP`, `USD`).
+
+Elle repose sur une codebase unifiée **Web & Mobile (Vue 3 + Capacitor)** propulsée par une API **.NET 8 Minimal APIs**, une persistance **SQLite** embarquée et un moteur d'export **PDF certifié (QuestPDF)**.
 
 ---
 
 ## ✨ Fonctionnalités Clés
 
-- **⚖️ Moteur Fiscal Officiel Urssaf / DGFIP (`FrenchFiscalScaleCalculator`)** :
-  - Prise en charge intégrale des grilles officielles **Voitures** (3 CV et moins à 7 CV et plus), **Motos** (1 à > 5 CV) et **Cyclomoteurs / Scooters**.
-  - Calcul progressif multi-tranches annuelles (`≤ 5 000 km`, `5 001 à 20 000 km`, `> 20 000 km`) avec **régularisation différentielle automatique** lors du franchissement de tranche en cours d'année.
-  - Application automatique de la **majoration légale de +20 %** pour les véhicules **100 % électriques**.
-  - Support des barèmes forfaitaires négociés en entreprise (ex: `0,45 €/km`) et des taux de prise en charge employeur partiels (ex: `80 %` ou `100 %`).
-- **🗺️ Saisie Intelligente de Trajets & Calcul Routier** :
-  - Autocomplétion d'adresses françaises en temps réel via l'API nationale ouverte **`api-adresse.data.gouv.fr`** (sans clé API requise).
-  - Calcul automatique de la distance routière entre le point de départ et d'arrivée via **OSRM Driving Route** avec repli mathématique **Haversine × 1.25** hors-ligne.
-  - Bascule instantanée **Aller simple / Aller-Retour (×2)** avec prévisualisation en direct de l'indemnité due.
+- **🌐 Moteur Multi-Barèmes Internationaux & Multi-Devises (`InternationalMileageCalculator`)** :
+  - **`FR_URSSAF` (France — EUR `€`)** : Grilles officielles DGFIP / Urssaf Voitures (`3 CV` à `7 CV+`), Motos et Cyclomoteurs, paliers progressifs (`≤ 5 000 km`, `5 001 à 20 000 km`, `> 20 000 km`), régularisation différentielle annuelle et **majoration légale de +20 %** pour les véhicules **100 % électriques**.
+  - **`BE_FPS` (Belgique — EUR `€`)** : Indemnité kilométrique forfaitaire officielle du SPF Finances (`0,428 €/km`).
+  - **`CH_TCS` (Suisse — CHF `CHF`)** : Barème standard TCS / Administration fiscale (`0,70 CHF/km` automobile, `0,40 CHF/km` moto).
+  - **`CA_CRA` (Canada — CAD `CA$`)** : Barème progressif de l'Agence du revenu du Canada (`0,70 CA$/km` sur les 5 000 premiers km puis `0,64 CA$/km` au-delà).
+  - **`UK_HMRC` (Royaume-Uni — GBP `£`)** : Barème *Approved Mileage Allowance Payments* (`0,45 £/km` jusqu'à 16 000 km puis `0,25 £/km` au-delà).
+  - **`US_IRS` (États-Unis — USD `$`)** : Barème fédéral *IRS Standard Mileage* (`0,67 $/km`).
+  - **`CUSTOM` (International — Toute devise)** : Taux forfaitaire d'entreprise librement configurable et taux de prise en charge employeur partiel ou total (`10 %` à `100 %`).
+- **🗺️ Géocodage Hybride Mondial & Calcul Routier Automatique** :
+  - Autocomplétion d'adresses haute précision combinant la **Base Adresse Nationale (`api-adresse.data.gouv.fr`)** pour la France et **Photon Komoot / OpenStreetMap** pour le reste du monde (Europe, Amérique du Nord, etc.), **sans aucune clé API requise**.
+  - Calcul automatique de la distance routière réelle via **OSRM Driving Route** avec repli mathématique **Haversine × 1.25** hors-ligne.
 - **📸 Justificatifs, Frais Réels & Calcul Automatique de TVA** :
   - Prise de photo directe des tickets (péages, parkings, repas, carburant, hébergement) via **`@capacitor/camera`** sur mobile ou téléversement sur navigateur.
-  - Extraction et calcul automatique de la **TVA récupérable** (`20 %`, `10 %`, `5,5 %`, `0 %`) à partir du montant TTC.
-- **📄 Export & Partage PDF Certifié (`QuestPDF`)** :
-  - Génération serveur à la volée d'un document PDF officiel prêt pour la comptabilité : tableau détaillé des déplacements, récapitulatif des frais annexes, ventilation HT/TVA/TTC, net à payer et encarts de signature Salarié / Direction.
+  - Extraction et calcul automatique de la **TVA récupérable** à partir du montant TTC.
+- **📄 Export & Partage PDF Multi-Devises (`QuestPDF`)** :
+  - Génération serveur à la volée d'un document PDF A4 professionnel affichant dynamiquement la devise (`€`, `CHF`, `CA$`, `£`, `$`) et la référence réglementaire du barème appliqué.
   - Partage natif sur iOS / Android via **`@capacitor/share`** ou téléchargement direct en un clic.
 
 ---
@@ -36,25 +40,28 @@
 ```mermaid
 flowchart LR
   subgraph Client["📱 Client Unifié Web & Mobile (Vue 3 + Capacitor)"]
-    UI["Vues Métier\n(Dashboard, Trajets, Reçus, Simulateur)"] --> Auto["AddressAutocomplete\n(Debounce 300ms)"]
+    UI["Vues Métier Multi-Devises\n(Dashboard, Trajets, Reçus, Simulateur)"] --> Auto["AddressAutocomplete\n(France & International)"]
     UI --> Cam["Capacitor Camera & Share\n(Scan Reçus & Export Natif)"]
     UI --> ApiService["Client HTTP Typé\n(src/services/api.ts)"]
   end
 
   subgraph Backend["⚙️ Serveur Backend (.NET 8 Minimal APIs)"]
-    Endpoints["Endpoints REST\n(/vehicles, /reports, /trips, /receipts)"] --> Calc["FrenchFiscalScaleCalculator\n(Barème Urssaf + Bonus 20% Élec)"]
-    Endpoints --> Pdf["ExpenseReportPdfDocument\n(Moteur QuestPDF A4)"]
-    Endpoints --> GeoProxy["AddressEndpoints\n(Géocodage & Routage)"]
+    Endpoints["Endpoints REST\n(/vehicles, /reports, /trips, /receipts)"] --> IntlCalc["InternationalMileageCalculator\n(FR, BE, CH, CA, UK, US, CUSTOM)"]
+    IntlCalc --> FrCalc["FrenchFiscalScaleCalculator\n(Barème Urssaf + Bonus 20% Élec)"]
+    Endpoints --> Pdf["ExpenseReportPdfDocument\n(QuestPDF Multi-Devises)"]
+    Endpoints --> GeoProxy["AddressEndpoints\n(Géocodage Hybride & Routage)"]
     Endpoints --> DB[("SQLite EF Core\n(AppDbContext)")]
   end
 
-  subgraph External["🌐 Services Géographiques Ouverts"]
-    BAN["API Adresse data.gouv.fr"]
+  subgraph External["🌐 Services Géographiques Ouverts (Sans Clé API)"]
+    BAN["BAN data.gouv.fr\n(France)"]
+    Photon["Photon OpenStreetMap\n(Monde Entier)"]
     OSRM["OSRM Routing Engine\n(+ Fallback Haversine)"]
   end
 
   ApiService -- "JSON REST / Multipart" --> Endpoints
   GeoProxy -- "HTTPS" --> BAN
+  GeoProxy -- "HTTPS" --> Photon
   GeoProxy -- "HTTPS" --> OSRM
   Pdf -- "Flux Binaire %PDF" --> UI
 ```
@@ -110,13 +117,13 @@ npx cap sync
 
 ## 🧪 Tests Automatisés & Analyse Statique Sonar
 
-Le projet applique une politique stricte **0 Warning / 0 Error** validée par **`SonarAnalyzer.CSharp`**, **`vue-tsc`** et **`oxlint`**, accompagnée de **78 tests automatisés** (**64 tests Backend xUnit** + **14 tests Frontend Vitest**) :
+Le projet applique une politique stricte **0 Warning / 0 Error** validée par **`SonarAnalyzer.CSharp`**, **`vue-tsc`** et **`oxlint`**, accompagnée de **88 tests automatisés** (**74 tests Backend xUnit** + **14 tests Frontend Vitest**) :
 
 ```bash
 # Lancer l'intégralité des tests (Backend xUnit + Frontend Vitest)
 npm test
 
-# Lancer uniquement les tests Backend (Barème Urssaf, QuestPDF, Intégration API SQLite)
+# Lancer uniquement les tests Backend (Barèmes Internationaux & Urssaf, QuestPDF, Intégration API SQLite)
 npm run test:backend
 
 # Lancer uniquement les tests Frontend (Client API + Composants & Vues UI)
@@ -150,20 +157,20 @@ npm run typecheck
 
 | Méthode | Route | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/reports` | Liste les résumés de toutes les notes de frais avec totaux calculés. |
+| `GET` | `/api/reports` | Liste les résumés de toutes les notes de frais avec barème (`countryScale`), devise (`currency`) et totaux. |
 | `GET` | `/api/reports/{id}` | Détail complet d'une note incluant ses trajets et ses justificatifs. |
-| `POST` | `/api/reports` | Crée une nouvelle note mensuelle (`409 Conflict` si la période existe déjà). |
-| `PUT` | `/api/reports/{id}` | Met à jour les informations générales d'une note de frais. |
+| `POST` | `/api/reports` | Crée une nouvelle note mensuelle multi-pays/multi-devises (`409 Conflict` si la période existe déjà). |
+| `PUT` | `/api/reports/{id}` | Met à jour les informations générales, le barème ou la devise d'une note de frais. |
 | `PATCH` | `/api/reports/{id}/status` | Modifie le statut de validation (`Draft`, `Submitted`, `Approved`, `Rejected`). |
 | `DELETE` | `/api/reports/{id}` | Supprime une note de frais et ses éléments rattachés en cascade. |
-| `GET` | `/api/reports/{id}/pdf` | Génère et télécharge le document PDF officiel via **QuestPDF**. |
+| `GET` | `/api/reports/{id}/pdf` | Génère et télécharge le document PDF officiel multi-devises via **QuestPDF**. |
 
 ### 🛣️ Trajets & Justificatifs (`/api/reports/{reportId}/...`)
 
 | Méthode | Route | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/reports/{reportId}/trips` | Liste les déplacements enregistrés sur une note de frais. |
-| `POST` | `/api/reports/{reportId}/trips` | Ajoute un trajet (simple ou A/R) avec calcul automatique du cumul annuel Urssaf. |
+| `POST` | `/api/reports/{reportId}/trips` | Ajoute un trajet (simple ou A/R) calculé selon le barème pays de la note et le cumul annuel. |
 | `PUT` | `/api/reports/{reportId}/trips/{tripId}` | Modifie un trajet existant et recalcule son indemnité kilométrique. |
 | `DELETE` | `/api/reports/{reportId}/trips/{tripId}` | Supprime un trajet et met à jour la note de frais. |
 | `GET` | `/api/reports/{reportId}/receipts` | Liste les reçus et frais réels d'une note de frais. |
@@ -171,15 +178,16 @@ npm run typecheck
 | `POST` | `/api/reports/{reportId}/receipts/{receiptId}/upload` | Téléverse la photo justificative (`multipart/form-data`). |
 | `DELETE` | `/api/reports/{reportId}/receipts/{receiptId}` | Supprime un justificatif de la note de frais. |
 
-### 🧮 Calculateur IK & Géolocalisation (`/api/calculator`, `/api/addresses`)
+### 🧮 Calculateur IK International & Géolocalisation (`/api/calculator`, `/api/addresses`)
 
 | Méthode | Route | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/calculator/simulate` | Simule une indemnité kilométrique selon le barème Urssaf ou un taux fixe. |
-| `GET` | `/api/calculator/ik` | Simulation rapide par paramètres de requête (`distanceKm`, `fiscalHorsepower`, `isElectric`). |
+| `GET` | `/api/calculator/presets` | Liste tous les barèmes internationaux supportés (`FR_URSSAF`, `BE_FPS`, `CH_TCS`, `CA_CRA`, `UK_HMRC`, `US_IRS`, `CUSTOM`). |
+| `POST` | `/api/calculator/simulate` | Simule une indemnité kilométrique selon le barème pays choisi ou un taux forfaitaire. |
+| `GET` | `/api/calculator/ik` | Simulation rapide par paramètres de requête (`distanceKm`, `countryScale`, `fiscalHorsepower`, `isElectric`). |
 | `GET` | `/api/calculator/rates` | Retourne la grille officielle de référence des taux au kilomètre (`3 CV` à `7 CV+`). |
-| `GET` | `/api/addresses/autocomplete?q=...` | Autocomplétion d'adresses françaises via `api-adresse.data.gouv.fr`. |
-| `GET` | `/api/addresses/search?q=...` | Recherche d'adresses avec validation stricte des paramètres (`400 BadRequest` si `< 2` car.). |
+| `GET` | `/api/addresses/autocomplete?q=...&country=...` | Autocomplétion d'adresses hybride (`data.gouv.fr` + `Photon OpenStreetMap` international). |
+| `GET` | `/api/addresses/search?q=...&country=...` | Recherche d'adresses internationale avec validation stricte des paramètres. |
 | `GET` | `/api/addresses/route` | Calcule la distance routière (OSRM + repli Haversine × 1.25) entre 2 coordonnées GPS. |
 | `GET` | `/api/addresses/distance` | Calcule la distance routière avec validation stricte des bornes géographiques. |
 
@@ -200,18 +208,19 @@ frais-route/
 │   │   ├── Endpoints/                            # Routes REST (Vehicles, Reports, Trips, Receipts, Calculator, Addresses)
 │   │   ├── Models/                               # Entités métier (Vehicle, ExpenseReport, Trip, ReceiptExpense)
 │   │   ├── Services/
+│   │   │   ├── InternationalMileageCalculator.cs # Moteur multi-barèmes internationaux (FR, BE, CH, CA, UK, US, CUSTOM)
 │   │   │   ├── FrenchFiscalScaleCalculator.cs    # Moteur de calcul officiel Urssaf / DGFIP
-│   │   │   └── ExpenseReportPdfDocument.cs       # Générateur de rapport PDF A4 QuestPDF
+│   │   │   └── ExpenseReportPdfDocument.cs       # Générateur de rapport PDF A4 multi-devises QuestPDF
 │   │   └── Program.cs                            # Point d'entrée, injection de dépendances & middleware
 │   └── FraisRoute.Tests/                         # Suite de tests automatisés xUnit
-│       ├── FrenchFiscalScaleCalculatorTests.cs   # Tests unitaires exhaustifs du barème fiscal
+│       ├── FrenchFiscalScaleCalculatorTests.cs   # Tests unitaires des barèmes Urssaf et internationaux
 │       ├── ExpenseReportPdfDocumentTests.cs      # Tests unitaires de génération PDF QuestPDF
 │       └── ApiEndpointsIntegrationTests.cs       # Tests d'intégration HTTP de bout en bout (WebApplicationFactory)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/                           # Composants réutilisables (BottomNav, AddressAutocomplete)
 │   │   ├── router/index.ts                       # Configuration Vue Router
-│   │   ├── services/api.ts                       # Client HTTP typé & modèles TypeScript
+│   │   ├── services/api.ts                       # Client HTTP typé, préréglages internationaux & devises
 │   │   └── views/                                # Vues principales (Dashboard, ReportDetail, AddTrip, AddReceipt, Vehicles, Simulator)
 │   ├── tests/
 │   │   ├── unit/api.test.ts                      # Tests unitaires du service API & gestion d'erreurs HTTP
