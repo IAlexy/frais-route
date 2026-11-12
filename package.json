@@ -1,0 +1,20 @@
+{
+  "name": "frais-route",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plateforme Web & Mobile de gestion des indemnités kilométriques (Barème officiel Urssaf / DGFIP) et des notes de frais avec export PDF.",
+  "license": "MIT",
+  "scripts": {
+    "dev:backend": "dotnet run --project backend/FraisRoute.Api/FraisRoute.Api.csproj --urls http://127.0.0.1:5000",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "dotnet build backend/FraisRoute.sln --configuration Release -warnaserror",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "dotnet test backend/FraisRoute.sln",
+    "test:frontend": "npm --prefix frontend test",
+    "test:coverage": "dotnet test backend/FraisRoute.sln --collect:\"XPlat Code Coverage\" && npm --prefix frontend run test:coverage",
+    "test": "npm run test:backend && npm run test:frontend",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "lint": "dotnet build backend/FraisRoute.sln -warnaserror && npm --prefix frontend run lint"
+  }
+}

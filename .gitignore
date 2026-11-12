@@ -1,0 +1,55 @@
+# Dépendances & Packages
+node_modules/
+**/node_modules/
+
+# Artefacts de compilation .NET
+bin/
+obj/
+**/bin/
+**/obj/
+out/
+publish/
+
+# Artefacts de build Frontend & Mobile
+dist/
+dist-ssr/
+**/dist/
+frontend/android/
+frontend/ios/
+*.local
+
+# Couverture de tests & Rapports
+coverage/
+**/coverage/
+TestResults/
+**/TestResults/
+*.trx
+*.coverage
+*.opencover.xml
+lcov.info
+
+# Base de données SQLite & Uploads locaux
+*.db
+*.db-shm
+*.db-wal
+backend/FraisRoute.Api/wwwroot/uploads/
+
+# Analyse statique Sonar
+.sonarqube/
+.scannerwork/
+
+# Environnement & Secrets
+.env
+.env.*
+!.env.example
+
+# IDEs & OS
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+*.user
+.DS_Store
+Thumbs.db
