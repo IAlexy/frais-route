@@ -128,6 +128,8 @@ describe('api service unit tests', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/reports/10', { method: 'DELETE' })
 
     expect(api.getPdfDownloadUrl(10)).toBe('/api/reports/10/pdf')
+    expect(api.getPdfDownloadUrl(10, 'en')).toBe('/api/reports/10/pdf?lang=en')
+    expect(api.getReportPdfUrl(10, 'fr')).toBe('/api/reports/10/pdf?lang=fr')
   })
 
   it('adds and deletes trips on a report', async () => {

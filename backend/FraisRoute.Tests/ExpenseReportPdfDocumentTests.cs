@@ -171,4 +171,60 @@ public class ExpenseReportPdfDocumentTests
         string header = Encoding.ASCII.GetString(pdfBytes, 0, 5);
         Assert.Equal("%PDF-", header);
     }
+
+    [Theory]
+    [InlineData("en", "en")]
+    [InlineData("en-US", "en")]
+    [InlineData("fr", "fr")]
+    [InlineData("unknown", "fr")]
+    public void GeneratePdf_WithLanguageAndDynamicLocaleRegistration_ProducesValidPdfBuffer(
+        string requestedLang,
+        string expectedResolvedLang)
+    {
+        var report = new ExpenseReport
+        {
+            Id = 77,
+            Title = "March 2026 Travel Expenses",
+            EmployeeName = "Jane Doe",
+            CompanyName = "Global Corp",
+            CountryScale = "UK_HMRC",
+            Currency = "GBP",
+            PeriodStart = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+            PeriodEnd = new DateTime(2026, 3, 31, 0, 0, 0, DateTimeKind.Utc),
+            Status = ReportStatus.Approved,
+            ReimbursementRatePercentage = 90m,
+            Trips =
+            [
+                new Trip
+                {
+                    Id = 1,
+                    Date = new DateTime(2026, 3, 10, 0, 0, 0, DateTimeKind.Utc),
+                    Purpose = "Client Visit London",
+                    DepartureAddress = "London",
+                    ArrivalAddress = "Oxford",
+                    DistanceKm = 90m,
+                    IsRoundTrip = true,
+                    CalculatedAmount = 81.00m
+                }
+            ],
+            Receipts =
+            [
+                new ReceiptExpense
+                {
+                    Id = 1,
+                    Date = new DateTime(2026, 3, 10, 0, 0, 0, DateTimeKind.Utc),
+                    Category = ReceiptCategory.Toll,
+                    Merchant = "M6 Toll",
+                    AmountTtc = 15.00m
+                }
+            ]
+        };
+
+        var doc = new ExpenseReportPdfDocument(report, requestedLang);
+        Assert.Equal(expectedResolvedLang, doc.Language);
+
+        byte[] pdfBytes = doc.GeneratePdf();
+        Assert.True(pdfBytes.Length > 1000);
+        Assert.Equal("%PDF-", Encoding.ASCII.GetString(pdfBytes, 0, 5));
+    }
 }

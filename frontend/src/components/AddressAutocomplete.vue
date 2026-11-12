@@ -2,6 +2,9 @@
 import { ref, watch } from 'vue'
 import { api, type AddressResult } from '@/services/api'
 import { MapPin, Loader2, X } from 'lucide-vue-next'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: string
@@ -81,7 +84,7 @@ function clear() {
         :value="query"
         @input="onInput"
         @focus="isOpen = results.length > 0"
-        :placeholder="placeholder || 'Rechercher une adresse ou une ville (Monde entier)...'"
+        :placeholder="placeholder || t('address.placeholder')"
         class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all shadow-xs"
       />
 

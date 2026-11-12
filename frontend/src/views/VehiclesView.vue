@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { api, type Vehicle, VehicleType } from '@/services/api'
 import { Car, Zap, Plus, Trash2, CheckCircle2, ShieldCheck } from 'lucide-vue-next'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const vehicles = ref<Vehicle[]>([])
 const isLoading = ref(true)
@@ -38,13 +41,12 @@ async function createVehicle() {
       defaultCustomRatePerKm: newCustomRate.value
     })
     showAddModal.value = false
-    // Reset form
     newName.value = ''
     newPlate.value = ''
     newCv.value = 5
     newIsElectric.value = false
     await loadVehicles()
-  } catch (err) {
+  } catch {
     alert('Erreur lors de l’ajout du véhicule')
   }
 }
@@ -60,15 +62,15 @@ async function deleteVehicle(id: number) {
   <div class="max-w-xl mx-auto px-4 pt-6 pb-28">
     <div class="flex items-center justify-between mb-5">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Mes Véhicules</h1>
-        <p class="text-xs text-slate-500 mt-0.5">Configuration des barèmes fiscaux (CV)</p>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ t('vehicles.title') }}</h1>
+        <p class="text-xs text-slate-500 mt-0.5">{{ t('vehicles.subtitle') }}</p>
       </div>
       <button
         @click="showAddModal = true"
         class="inline-flex items-center gap-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-xl shadow-xs transition-all"
       >
         <Plus class="w-4 h-4" />
-        Ajouter
+        {{ t('vehicles.add') }}
       </button>
     </div>
 
@@ -76,9 +78,8 @@ async function deleteVehicle(id: number) {
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
       <ShieldCheck class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
       <div class="text-xs text-blue-950">
-        <span class="font-bold">Barème officiel français :</span>
-        Le remboursement dépend directement de la puissance fiscale (sur la carte grise, case P.6).
-        Les véhicules 100% électriques bénéficient automatiquement d'une <span class="font-bold">majoration de +20%</span>.
+        <span class="font-bold">{{ t('vehicles.bannerBold') }}</span>
+        {{ t('vehicles.bannerText') }}
       </div>
     </div>
 
@@ -109,7 +110,7 @@ async function deleteVehicle(id: number) {
                 v-if="v.isDefault"
                 class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full"
               >
-                Par défaut
+                {{ t('vehicles.defaultBadge') }}
               </span>
             </div>
             <div class="text-xs text-slate-500 flex items-center gap-2">
@@ -117,7 +118,7 @@ async function deleteVehicle(id: number) {
                 {{ v.licensePlate }}
               </span>
               <span>· {{ v.fiscalHorsepower }} CV</span>
-              <span v-if="v.isElectric" class="text-emerald-600 font-semibold">+20% élec</span>
+              <span v-if="v.isElectric" class="text-emerald-600 font-semibold">{{ t('vehicles.electricBonus') }}</span>
             </div>
           </div>
         </div>
@@ -137,12 +138,12 @@ async function deleteVehicle(id: number) {
       class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
     >
       <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-900 mb-1">Ajouter un véhicule</h3>
-        <p class="text-xs text-slate-500 mb-4">Renseignez les détails pour le calcul kilométrique.</p>
+        <h3 class="text-lg font-bold text-slate-900 mb-1">{{ t('vehicles.modalTitle') }}</h3>
+        <p class="text-xs text-slate-500 mb-4">{{ t('vehicles.modalSubtitle') }}</p>
 
         <form @submit.prevent="createVehicle" class="space-y-3.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Marque & Modèle</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('vehicles.brandModel') }}</label>
             <input
               v-model="newName"
               type="text"
@@ -154,7 +155,7 @@ async function deleteVehicle(id: number) {
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Immatriculation</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('vehicles.plate') }}</label>
               <input
                 v-model="newPlate"
                 type="text"
@@ -166,17 +167,17 @@ async function deleteVehicle(id: number) {
 
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">
-                Puissance fiscale : {{ newCv }} CV
+                {{ t('vehicles.fiscalPower', { cv: newCv }) }}
               </label>
               <select
                 v-model.number="newCv"
                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 outline-none font-bold"
               >
-                <option :value="3">3 CV et moins</option>
+                <option :value="3">3 CV</option>
                 <option :value="4">4 CV</option>
-                <option :value="5">5 CV (Le plus courant)</option>
+                <option :value="5">5 CV</option>
                 <option :value="6">6 CV</option>
-                <option :value="7">7 CV et plus</option>
+                <option :value="7">7 CV+</option>
               </select>
             </div>
           </div>
@@ -191,9 +192,9 @@ async function deleteVehicle(id: number) {
               <Zap class="w-4 h-4" :class="newIsElectric ? 'text-emerald-600 fill-emerald-500' : 'text-slate-400'" />
               <div>
                 <div class="text-xs font-bold" :class="newIsElectric ? 'text-emerald-900' : 'text-slate-700'">
-                  Véhicule 100% Électrique
+                  {{ t('vehicles.electricTitle') }}
                 </div>
-                <div class="text-[10px] text-slate-500">Majoration légale de +20% sur les indemnités</div>
+                <div class="text-[10px] text-slate-500">{{ t('vehicles.electricDesc') }}</div>
               </div>
             </div>
             <div
@@ -207,7 +208,7 @@ async function deleteVehicle(id: number) {
           <!-- Toggle Défaut -->
           <label class="flex items-center gap-2 cursor-pointer pt-1">
             <input v-model="newIsDefault" type="checkbox" class="w-4 h-4 rounded text-blue-600 accent-blue-600" />
-            <span class="text-xs text-slate-700 font-medium">Définir comme véhicule principal par défaut</span>
+            <span class="text-xs text-slate-700 font-medium">{{ t('vehicles.setDefault') }}</span>
           </label>
 
           <div class="pt-2 flex justify-end gap-2">
@@ -216,13 +217,13 @@ async function deleteVehicle(id: number) {
               @click="showAddModal = false"
               class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
             >
-              Annuler
+              {{ t('vehicles.cancel') }}
             </button>
             <button
               type="submit"
               class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs"
             >
-              Enregistrer
+              {{ t('vehicles.save') }}
             </button>
           </div>
         </form>

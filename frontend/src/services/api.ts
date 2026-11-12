@@ -426,8 +426,13 @@ export const api = {
     return handleJsonResponse<RouteResult>(res);
   },
 
-  // URL de téléchargement PDF
-  getPdfDownloadUrl(reportId: number): string {
-    return `${API_BASE}/reports/${reportId}/pdf`;
+  // URL de téléchargement PDF (avec support multilingue ?lang=fr|en)
+  getPdfDownloadUrl(reportId: number, lang?: string): string {
+    const query = lang ? `?lang=${encodeURIComponent(lang)}` : '';
+    return `${API_BASE}/reports/${reportId}/pdf${query}`;
+  },
+
+  getReportPdfUrl(reportId: number, lang?: string): string {
+    return this.getPdfDownloadUrl(reportId, lang);
   }
 };

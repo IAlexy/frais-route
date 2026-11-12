@@ -29,9 +29,12 @@ Elle repose sur une codebase unifiée **Web & Mobile (Vue 3 + Capacitor)** propu
 - **📸 Justificatifs, Frais Réels & Calcul Automatique de TVA** :
   - Prise de photo directe des tickets (péages, parkings, repas, carburant, hébergement) via **`@capacitor/camera`** sur mobile ou téléversement sur navigateur.
   - Extraction et calcul automatique de la **TVA récupérable** à partir du montant TTC.
-- **📄 Export & Partage PDF Multi-Devises (`QuestPDF`)** :
-  - Génération serveur à la volée d'un document PDF A4 professionnel affichant dynamiquement la devise (`€`, `CHF`, `CA$`, `£`, `$`) et la référence réglementaire du barème appliqué.
+- **📄 Export & Partage PDF Multi-Devises & Multilingue (`QuestPDF`)** :
+  - Génération serveur à la volée d'un document PDF A4 professionnel en **Français (`?lang=fr`)** ou en **Anglais (`?lang=en`)**, affichant dynamiquement la devise (`€`, `CHF`, `CA$`, `£`, `$`) et la référence réglementaire du barème appliqué.
   - Partage natif sur iOS / Android via **`@capacitor/share`** ou téléchargement direct en un clic.
+- **🌐 Architecture i18n Extensible (`FR` / `EN` + Ajout dynamique de langues)** :
+  - Sélecteur de langue temps réel dans l'en-tête avec persistance `localStorage` (`fraisroute_locale`).
+  - Registre extensible (`registerLocale(code, dictionary)` côté Vue 3 et `ExpenseReportPdfDocument.RegisterLocale(code, labels)` côté .NET 8) permettant d'ajouter facilement de nouvelles langues (`es`, `de`, `it`, etc.) avec vérification automatisée de parité des clés.
 
 ---
 
@@ -117,7 +120,7 @@ npx cap sync
 
 ## 🧪 Tests Automatisés & Analyse Statique Sonar
 
-Le projet applique une politique stricte **0 Warning / 0 Error** validée par **`SonarAnalyzer.CSharp`**, **`vue-tsc`** et **`oxlint`**, accompagnée de **88 tests automatisés** (**74 tests Backend xUnit** + **14 tests Frontend Vitest**) :
+Le projet applique une politique stricte **0 Warning / 0 Error** validée par **`SonarAnalyzer.CSharp`**, **`vue-tsc`** et **`oxlint`**, accompagnée de **96 tests automatisés** (**78 tests Backend xUnit** + **18 tests Frontend Vitest**) :
 
 ```bash
 # Lancer l'intégralité des tests (Backend xUnit + Frontend Vitest)
@@ -219,12 +222,13 @@ frais-route/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/                           # Composants réutilisables (BottomNav, AddressAutocomplete)
+│   │   ├── i18n/                                 # Moteur d'internationalisation extensible (FR/EN + registerLocale)
 │   │   ├── router/index.ts                       # Configuration Vue Router
 │   │   ├── services/api.ts                       # Client HTTP typé, préréglages internationaux & devises
 │   │   └── views/                                # Vues principales (Dashboard, ReportDetail, AddTrip, AddReceipt, Vehicles, Simulator)
 │   ├── tests/
-│   │   ├── unit/api.test.ts                      # Tests unitaires du service API & gestion d'erreurs HTTP
-│   │   └── ui/                                   # Tests de composants et de vues Vue Test Utils / JSDOM
+│   │   ├── unit/                                 # Tests unitaires (client API & parité stricte i18n FR/EN)
+│   │   └── ui/                                   # Tests de composants, sélecteur de langue et vues Vue Test Utils / JSDOM
 │   ├── capacitor.config.ts                       # Configuration native iOS / Android
 │   ├── vite.config.ts                            # Configuration Vite 8 & Tailwind CSS v4
 │   └── vitest.config.ts                          # Configuration Vitest & couverture V8 LCOV

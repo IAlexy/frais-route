@@ -5,6 +5,9 @@ import { api, type ExpenseReportDetail, ReceiptCategory, formatCurrencySymbol } 
 import { ArrowLeft, Download, Trash2, MapPin, Receipt, Car, Plus, Eye } from 'lucide-vue-next'
 import { Share } from '@capacitor/share'
 import { Capacitor } from '@capacitor/core'
+import { useI18n } from '@/i18n'
+
+const { t, locale } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -44,7 +47,7 @@ async function deleteReceipt(receiptId: number) {
 
 async function shareOrDownloadPdf() {
   if (!report.value) return
-  const pdfUrl = api.getPdfDownloadUrl(report.value.id)
+  const pdfUrl = api.getPdfDownloadUrl(report.value.id, locale.value)
 
   if (Capacitor.isNativePlatform()) {
     try {
@@ -65,12 +68,12 @@ async function shareOrDownloadPdf() {
 
 function getCategoryLabel(cat: ReceiptCategory) {
   switch (cat) {
-    case ReceiptCategory.Toll: return 'Péage'
-    case ReceiptCategory.Parking: return 'Stationnement'
-    case ReceiptCategory.Meal: return 'Repas'
-    case ReceiptCategory.Fuel: return 'Carburant'
-    case ReceiptCategory.Hotel: return 'Hôtel'
-    default: return 'Autre'
+    case ReceiptCategory.Toll: return t('category.toll')
+    case ReceiptCategory.Parking: return t('category.parking')
+    case ReceiptCategory.Meal: return t('category.meal')
+    case ReceiptCategory.Fuel: return t('category.fuel')
+    case ReceiptCategory.Hotel: return t('category.hotel')
+    default: return t('category.other')
   }
 }
 </script>

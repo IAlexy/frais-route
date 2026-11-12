@@ -496,6 +496,12 @@ public sealed class ApiEndpointsIntegrationTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, pdfRes.StatusCode);
         byte[] pdfBytes = await pdfRes.Content.ReadAsByteArrayAsync();
         Assert.Equal("%PDF-", Encoding.ASCII.GetString(pdfBytes, 0, 5));
+
+        var pdfEnRes = await _client.GetAsync($"/api/reports/{report.Id}/pdf?lang=en");
+        Assert.Equal(HttpStatusCode.OK, pdfEnRes.StatusCode);
+        Assert.Contains("Expense_Report", pdfEnRes.Content.Headers.ContentDisposition?.FileName ?? string.Empty);
+        byte[] pdfEnBytes = await pdfEnRes.Content.ReadAsByteArrayAsync();
+        Assert.Equal("%PDF-", Encoding.ASCII.GetString(pdfEnBytes, 0, 5));
     }
 
     [Fact]

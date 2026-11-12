@@ -6,6 +6,7 @@ import AddressAutocomplete from '@/components/AddressAutocomplete.vue'
 import App from '@/App.vue'
 import { router as appRouter } from '@/router'
 import { api } from '@/services/api'
+import { setLocale } from '@/i18n'
 
 vi.mock('@/services/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/api')>()
@@ -22,6 +23,7 @@ vi.mock('@/services/api', async (importOriginal) => {
 describe('UI Components Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    setLocale('fr')
   })
 
   it('renders BottomNav with 5 navigation links and highlights active route', async () => {
@@ -120,5 +122,23 @@ describe('UI Components Tests', () => {
 
     expect(wrapper.find('main').exists()).toBe(true)
     expect(wrapper.find('nav').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Frais de route')
+    expect(wrapper.text()).toContain('Simulateur')
+
+    // Click EN button in header to switch UI language to English in real time
+    const enButton = wrapper.find('[data-testid="lang-en"]')
+    expect(enButton.exists()).toBe(true)
+    await enButton.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Travel Expenses')
+    expect(wrapper.text()).toContain('Simulator')
+    expect(wrapper.text()).toContain('Vehicles')
+
+    // Switch back to FR
+    const frButton = wrapper.find('[data-testid="lang-fr"]')
+    await frButton.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Frais de route')
   })
 })

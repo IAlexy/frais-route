@@ -10,6 +10,9 @@ import {
 import { Plus, Download, FileText, Calendar, ChevronRight, CheckCircle2, Clock, AlertCircle, Globe } from 'lucide-vue-next'
 import { Share } from '@capacitor/share'
 import { Capacitor } from '@capacitor/core'
+import { useI18n } from '@/i18n'
+
+const { t, locale } = useI18n()
 
 const reports = ref<ExpenseReportSummary[]>([])
 const isLoading = ref(true)
@@ -70,7 +73,7 @@ async function createReport() {
 
 async function shareOrDownloadPdf(reportId: number, title: string, event: Event) {
   event.stopPropagation()
-  const pdfUrl = api.getPdfDownloadUrl(reportId)
+  const pdfUrl = api.getPdfDownloadUrl(reportId, locale.value)
 
   if (Capacitor.isNativePlatform()) {
     try {
@@ -93,13 +96,13 @@ async function shareOrDownloadPdf(reportId: number, title: string, event: Event)
 function getStatusBadge(status: ReportStatus) {
   switch (status) {
     case ReportStatus.Approved:
-      return { text: 'Validée', class: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 }
+      return { text: t('status.approved'), class: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 }
     case ReportStatus.Submitted:
-      return { text: 'Soumise', class: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock }
+      return { text: t('status.submitted'), class: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock }
     case ReportStatus.Rejected:
-      return { text: 'Refusée', class: 'bg-rose-50 text-rose-700 border-rose-200', icon: AlertCircle }
+      return { text: t('status.rejected'), class: 'bg-rose-50 text-rose-700 border-rose-200', icon: AlertCircle }
     default:
-      return { text: 'Brouillon', class: 'bg-slate-100 text-slate-700 border-slate-200', icon: FileText }
+      return { text: t('status.draft'), class: 'bg-slate-100 text-slate-700 border-slate-200', icon: FileText }
   }
 }
 </script>
@@ -109,41 +112,41 @@ function getStatusBadge(status: ReportStatus) {
     <!-- En-tête -->
     <header class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Frais de route</h1>
-        <p class="text-xs text-slate-500 mt-0.5">Indemnités kilométriques & Justificatifs multi-pays</p>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ t('dashboard.title') }}</h1>
+        <p class="text-xs text-slate-500 mt-0.5">{{ t('dashboard.subtitle') }}</p>
       </div>
       <button
         @click="showCreateModal = true"
         class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition-all"
       >
         <Plus class="w-4 h-4" />
-        Nouvelle note
+        {{ t('dashboard.newReport') }}
       </button>
     </header>
 
     <!-- Résumé KPI Global -->
     <div class="grid grid-cols-2 gap-3 mb-6">
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-        <span class="text-xs font-medium text-slate-500">Total à rembourser</span>
+        <span class="text-xs font-medium text-slate-500">{{ t('dashboard.totalReimbursable') }}</span>
         <div class="text-2xl font-black text-blue-600 mt-1">
           {{ totalReimbursableAll.toFixed(2) }} €
         </div>
-        <span class="text-[11px] text-slate-400">Toutes notes confondues</span>
+        <span class="text-[11px] text-slate-400">{{ t('dashboard.allReports') }}</span>
       </div>
 
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-        <span class="text-xs font-medium text-slate-500">Total distance</span>
+        <span class="text-xs font-medium text-slate-500">{{ t('dashboard.totalDistance') }}</span>
         <div class="text-2xl font-black text-slate-800 mt-1">
           {{ totalKmAll.toFixed(0) }} <span class="text-sm font-semibold text-slate-500">km</span>
         </div>
-        <span class="text-[11px] text-slate-400">Multi-barèmes fiscaux</span>
+        <span class="text-[11px] text-slate-400">{{ t('dashboard.multiScale') }}</span>
       </div>
     </div>
 
     <!-- Liste des Notes de Frais -->
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Mes Notes de frais</h2>
-      <span class="text-xs text-slate-400">{{ reports.length }} dossier(s)</span>
+      <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">{{ t('dashboard.myReports') }}</h2>
+      <span class="text-xs text-slate-400">{{ t('dashboard.foldersCount', { count: reports.length }) }}</span>
     </div>
 
     <div v-if="isLoading" class="space-y-3">
@@ -152,13 +155,13 @@ function getStatusBadge(status: ReportStatus) {
 
     <div v-else-if="reports.length === 0" class="text-center py-12 bg-white border border-dashed border-slate-300 rounded-2xl p-8">
       <FileText class="w-10 h-10 text-slate-300 mx-auto mb-3" />
-      <h3 class="text-sm font-semibold text-slate-800">Aucune note de frais</h3>
-      <p class="text-xs text-slate-500 mt-1 mb-4">Créez votre première note mensuelle pour y enregistrer vos trajets.</p>
+      <h3 class="text-sm font-semibold text-slate-800">{{ t('dashboard.emptyTitle') }}</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4">{{ t('dashboard.emptyDesc') }}</p>
       <button
         @click="showCreateModal = true"
         class="bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-xs"
       >
-        Créer une note
+        {{ t('dashboard.createReport') }}
       </button>
     </div>
 
@@ -189,7 +192,12 @@ function getStatusBadge(status: ReportStatus) {
             </h3>
             <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
               <Calendar class="w-3.5 h-3.5 text-slate-400" />
-              Du {{ new Date(report.periodStart).toLocaleDateString('fr-FR') }} au {{ new Date(report.periodEnd).toLocaleDateString('fr-FR') }}
+              {{
+                t('dashboard.periodRange', {
+                  start: new Date(report.periodStart).toLocaleDateString('fr-FR'),
+                  end: new Date(report.periodEnd).toLocaleDateString('fr-FR')
+                })
+              }}
             </p>
           </div>
 
@@ -198,7 +206,7 @@ function getStatusBadge(status: ReportStatus) {
               {{ report.totalReimbursableAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}
             </div>
             <div class="text-[11px] text-slate-400">
-              {{ report.totalDistanceKm.toFixed(0) }} km · {{ report.tripsCount }} trajet(s)
+              {{ report.totalDistanceKm.toFixed(0) }} km · {{ t('dashboard.tripsCount', { count: report.tripsCount }) }}
             </div>
           </div>
         </div>
@@ -207,14 +215,14 @@ function getStatusBadge(status: ReportStatus) {
         <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
           <div class="text-[11px] text-slate-500 font-medium">
             IK : <span class="font-semibold text-slate-800">{{ report.totalMileageAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}</span>
-            <span v-if="report.totalReceiptsAmount > 0"> · Reçus : <span class="font-semibold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}</span></span>
+            <span v-if="report.totalReceiptsAmount > 0"> · {{ t('dashboard.receiptsLabel') }} : <span class="font-semibold text-slate-800">{{ report.totalReceiptsAmount.toFixed(2) }} {{ formatCurrencySymbol(report.currency) }}</span></span>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               @click="shareOrDownloadPdf(report.id, report.title, $event)"
               class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
-              title="Exporter ou partager en PDF"
+              title="PDF"
             >
               <Download class="w-3.5 h-3.5" />
               PDF
@@ -231,12 +239,12 @@ function getStatusBadge(status: ReportStatus) {
       class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
     >
       <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-900 mb-1">Nouvelle note de frais</h3>
-        <p class="text-xs text-slate-500 mb-4">Définissez la période, le pays/barème fiscal et l'organisme.</p>
+        <h3 class="text-lg font-bold text-slate-900 mb-1">{{ t('dashboard.modalTitle') }}</h3>
+        <p class="text-xs text-slate-500 mb-4">{{ t('dashboard.modalSubtitle') }}</p>
 
         <form @submit.prevent="createReport" class="space-y-3.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Titre du dossier</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('dashboard.fieldTitle') }}</label>
             <input
               v-model="newTitle"
               type="text"
@@ -248,7 +256,7 @@ function getStatusBadge(status: ReportStatus) {
           <div>
             <label class="flex items-center gap-1 text-xs font-semibold text-slate-600 mb-1">
               <Globe class="w-3.5 h-3.5 text-blue-600" />
-              Barème fiscal & Devise
+              {{ t('dashboard.fieldScale') }}
             </label>
             <select
               v-model="newCountryScale"
@@ -262,7 +270,7 @@ function getStatusBadge(status: ReportStatus) {
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du salarié</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('dashboard.fieldEmployee') }}</label>
               <input
                 v-model="newEmployeeName"
                 type="text"
@@ -271,7 +279,7 @@ function getStatusBadge(status: ReportStatus) {
               />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Entreprise / Client</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('dashboard.fieldCompany') }}</label>
               <input
                 v-model="newCompanyName"
                 type="text"
@@ -283,7 +291,7 @@ function getStatusBadge(status: ReportStatus) {
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Date début</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('dashboard.fieldStart') }}</label>
               <input
                 v-model="newPeriodStart"
                 type="date"
@@ -292,7 +300,7 @@ function getStatusBadge(status: ReportStatus) {
               />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Date fin</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">{{ t('dashboard.fieldEnd') }}</label>
               <input
                 v-model="newPeriodEnd"
                 type="date"
@@ -304,7 +312,7 @@ function getStatusBadge(status: ReportStatus) {
 
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">
-              Taux de remboursement employeur ({{ newReimbursementRate }}%)
+              {{ t('dashboard.fieldRate', { rate: newReimbursementRate }) }}
             </label>
             <input
               v-model.number="newReimbursementRate"
@@ -315,8 +323,8 @@ function getStatusBadge(status: ReportStatus) {
               class="w-full accent-blue-600 cursor-pointer"
             />
             <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
-              <span>Partiel (50%)</span>
-              <span>Complet (100%)</span>
+              <span>{{ t('dashboard.partial50') }}</span>
+              <span>{{ t('dashboard.full100') }}</span>
             </div>
           </div>
 
@@ -326,13 +334,13 @@ function getStatusBadge(status: ReportStatus) {
               @click="showCreateModal = false"
               class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
             >
-              Annuler
+              {{ t('dashboard.cancel') }}
             </button>
             <button
               type="submit"
               class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors"
             >
-              Créer la note
+              {{ t('dashboard.submit') }}
             </button>
           </div>
         </form>

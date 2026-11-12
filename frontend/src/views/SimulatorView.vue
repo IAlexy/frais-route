@@ -8,6 +8,9 @@ import {
   type MileagePreset
 } from '@/services/api'
 import { Sparkles, ArrowLeftRight, Zap, Info, Globe } from 'lucide-vue-next'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const presets = ref<MileagePreset[]>(DEFAULT_MILEAGE_PRESETS)
 const countryScale = ref<string>('FR_URSSAF')
@@ -60,8 +63,8 @@ onMounted(calculate)
 <template>
   <div class="max-w-xl mx-auto px-4 pt-6 pb-28">
     <div class="mb-5">
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Simulateur IK</h1>
-      <p class="text-xs text-slate-500 mt-0.5">Barèmes fiscaux officiels internationaux & Forfaits entreprise</p>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ t('simulator.title') }}</h1>
+      <p class="text-xs text-slate-500 mt-0.5">{{ t('simulator.subtitle') }}</p>
     </div>
 
     <div class="space-y-4">
@@ -69,7 +72,7 @@ onMounted(calculate)
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-2.5">
         <label class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
           <Globe class="w-3.5 h-3.5 text-blue-600" />
-          Pays & Barème Fiscal Applicable
+          {{ t('simulator.countryScale') }}
         </label>
         <select
           v-model="countryScale"
@@ -85,7 +88,7 @@ onMounted(calculate)
 
         <div v-if="countryScale === 'CUSTOM'" class="pt-2">
           <label class="block text-xs font-semibold text-slate-600 mb-1">
-            Taux forfaitaire personnalisé ({{ currencySymbol }}/km)
+            {{ t('simulator.customRate', { symbol: currencySymbol }) }}
           </label>
           <input
             v-model.number="customRate"
@@ -102,7 +105,7 @@ onMounted(calculate)
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3.5">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-            Distance (km aller simple)
+            {{ t('simulator.distanceOneWay') }}
           </label>
           <div class="relative">
             <input
@@ -124,7 +127,7 @@ onMounted(calculate)
         >
           <span class="flex items-center gap-1.5">
             <ArrowLeftRight class="w-3.5 h-3.5" />
-            {{ isRoundTrip ? 'Aller-Retour (Distance doublée)' : 'Aller simple' }}
+            {{ isRoundTrip ? t('simulator.roundTrip') : t('simulator.oneWay') }}
           </span>
           <span class="font-bold text-xs">{{ (distanceKm || 0) * (isRoundTrip ? 2 : 1) }} km</span>
         </button>
@@ -136,7 +139,7 @@ onMounted(calculate)
         class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3.5"
       >
         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600">
-          Puissance fiscale (CV)
+          {{ t('simulator.fiscalPower') }}
         </label>
         <div class="grid grid-cols-5 gap-1.5">
           <button
@@ -162,13 +165,13 @@ onMounted(calculate)
             <Zap class="w-4 h-4" :class="isElectric ? 'text-emerald-600 fill-emerald-500' : 'text-slate-400'" />
             <div>
               <div class="text-xs font-bold" :class="isElectric ? 'text-emerald-900' : 'text-slate-700'">
-                Véhicule 100% Électrique
+                {{ t('simulator.electricTitle') }}
               </div>
-              <div class="text-[10px] text-slate-500">+20% de majoration fiscale</div>
+              <div class="text-[10px] text-slate-500">{{ t('simulator.electricSubtitle') }}</div>
             </div>
           </div>
           <span class="text-xs font-bold" :class="isElectric ? 'text-emerald-700' : 'text-slate-400'">
-            {{ isElectric ? 'OUI (+20%)' : 'NON' }}
+            {{ isElectric ? t('simulator.yesElectric') : t('simulator.noElectric') }}
           </span>
         </div>
       </div>
@@ -187,8 +190,8 @@ onMounted(calculate)
 
         <div class="flex items-baseline justify-between mt-3 pt-3 border-t border-white/15">
           <div>
-            <span class="text-xs text-blue-100 block">Indemnité kilométrique due</span>
-            <span class="text-xs text-blue-200">{{ result.totalDistanceKm }} km parcourus</span>
+            <span class="text-xs text-blue-100 block">{{ t('simulator.allowanceDue') }}</span>
+            <span class="text-xs text-blue-200">{{ t('simulator.kmTraveled', { km: result.totalDistanceKm }) }}</span>
           </div>
           <span class="text-3xl font-black tracking-tight">{{ result.calculatedAmount.toFixed(2) }} {{ currencySymbol }}</span>
         </div>
@@ -198,7 +201,7 @@ onMounted(calculate)
       <div class="text-[11px] text-slate-400 p-3 bg-slate-100/70 rounded-xl flex items-start gap-2">
         <Info class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
         <div>
-          Les montants calculés sont exonérés de cotisations sociales et d'impôts dans les limites du barème fiscal officiel sélectionné (Urssaf, SPF Finances, TCS, ARC/CRA, HMRC, IRS).
+          {{ t('simulator.disclaimer') }}
         </div>
       </div>
     </div>

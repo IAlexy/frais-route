@@ -191,8 +191,8 @@ public static class ExpenseReportEndpoints
         })
         .WithName("DeleteReport");
 
-        // Téléchargement / Visualisation du PDF officiel généré avec QuestPDF
-        group.MapGet("/{id:int}/pdf", async (int id, AppDbContext db) =>
+        // Téléchargement / Visualisation du PDF officiel généré avec QuestPDF (supporte ?lang=fr|en)
+        group.MapGet("/{id:int}/pdf", async (int id, string? lang, AppDbContext db) =>
         {
             var report = await db.ExpenseReports
                 .Include(e => e.Trips)
@@ -202,14 +202,17 @@ public static class ExpenseReportEndpoints
 
             if (report is null) return Results.NotFound();
 
-            var document = new ExpenseReportPdfDocument(report);
+            var document = new ExpenseReportPdfDocument(report, lang);
             byte[] pdfBytes = document.GeneratePdf();
 
-            var fileName = $"Note_de_frais_NDF-{report.Id:D5}_{report.PeriodStart:yyyy-MM}.pdf";
+            var prefix = string.Equals(document.Language, "en", StringComparison.OrdinalIgnoreCase)
+                ? "Expense_Report"
+                : "Note_de_frais";
+            var fileName = $"{prefix}_NDF-{report.Id:D5}_{report.PeriodStart:yyyy-MM}.pdf";
             return Results.File(pdfBytes, "application/pdf", fileName);
         })
         .WithName("ExportReportPdf")
-        .WithSummary("Génère le document PDF officiel de la note de frais");
+        .WithSummary("Génère le document PDF officiel multilingue de la note de frais");
 
         return group;
     }

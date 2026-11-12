@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { FileText, PlusCircle, Receipt, Car, Calculator } from 'lucide-vue-next'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
+const { t } = useI18n()
 
-const navItems = [
-  { name: 'Notes', path: '/', icon: FileText },
-  { name: 'Nouveau Trajet', path: '/add-trip', icon: PlusCircle, isPrimary: true },
-  { name: 'Reçu', path: '/add-receipt', icon: Receipt },
-  { name: 'Véhicules', path: '/vehicles', icon: Car },
-  { name: 'Simulateur', path: '/simulator', icon: Calculator },
-]
+const navItems = computed(() => [
+  { name: t('nav.reports'), path: '/', icon: FileText },
+  { name: t('nav.newTrip'), path: '/add-trip', icon: PlusCircle, isPrimary: true },
+  { name: t('nav.receipt'), path: '/add-receipt', icon: Receipt },
+  { name: t('nav.vehicles'), path: '/vehicles', icon: Car },
+  { name: t('nav.simulator'), path: '/simulator', icon: Calculator },
+])
 
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
